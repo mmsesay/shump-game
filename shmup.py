@@ -60,12 +60,42 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+
+# mob sprite class
+class Mob(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((30, 40))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(WIDTH - self.rect.width)
+        self.rect.y = random.randrange(-100, -40)
+        self.speedy = random.randrange(1, 8)
+        self.speedx = random.randrange(-3, 3)
+
+    def update(self):
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        # check the mob state matches any of the conditions, respawn them
+        if self.rect.top > HEIGHT + 10 or self.rect.left < -25 or self.rect.right > WIDTH + 20:
+            self.rect.x = random.randrange(WIDTH - self.rect.width)
+            self.rect.y = random.randrange(-100, -40)
+            self.speedy = random.randrange(1, 8)
+
+
 # all sprites
 all_sprites = pygame.sprite.Group()
+mobs = pygame.sprite.Group()
 
-# new sprite object
+# new player sprite object
 player = Player()
 all_sprites.add(player)
+
+# new mob sprite object
+for i in range(8):
+    m = Mob()
+    all_sprites.add(m)
+    mobs.add(m)
 
 # game loop
 running = True
@@ -84,6 +114,11 @@ while running:
 
     # update
     all_sprites.update()
+
+    # check for player and mob collision
+    hits = pygame.sprite.spritecollide(player, mobs, False)
+    if hits:
+        running = False
 
     # draw / render
     screen.fill(BLACK)
