@@ -18,6 +18,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN  = (0, 255, 0)
 BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 # initializations
 pygame.init()
@@ -60,6 +61,12 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+    # shoot function
+    def shoot(self):
+        # creating an instance of the bullet
+        self.bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(self.bullet)
+        bullets.add(self.bullet)
 
 # mob sprite class
 class Mob(pygame.sprite.Sprite):
@@ -83,9 +90,28 @@ class Mob(pygame.sprite.Sprite):
             self.speedy = random.randrange(1, 8)
 
 
-# all sprites
+# bullet sprite
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        # kill remove the sprite from the group
+        if self.rect.bottom < 0:
+            self.kill() 
+
+
+# all sprites groups
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 
 # new player sprite object
 player = Player()
@@ -93,9 +119,9 @@ all_sprites.add(player)
 
 # new mob sprite object
 for i in range(8):
-    m = Mob()
-    all_sprites.add(m)
-    mobs.add(m)
+    mob = Mob()
+    all_sprites.add(mob)
+    mobs.add(mob)
 
 # game loop
 running = True
@@ -109,11 +135,23 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        # control the player
+        # control the player shoot event
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.shoot()  # call the player shoot function
 
 
     # update
     all_sprites.update()
+
+    # check if a mob collide with a bullet and destroy both (mob and bullet)
+    hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
+    # respawn mob when killed
+    for hit in hits:
+        mob = Mob()  # create new Mob instance
+        all_sprites.add(mob)  # add the mob sprite
+        mobs.add(mob)  # add it to the group
+
 
     # check for player and mob collision
     hits = pygame.sprite.spritecollide(player, mobs, False)
